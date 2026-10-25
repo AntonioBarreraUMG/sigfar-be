@@ -1,6 +1,6 @@
 # SIGFAR — Backend académico (Node.js + Express + Oracle XE)
 
-**Iteración 2:** autenticación, sucursales, medicamentos, inventario y transferencias entre sucursales. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
+**Iteración 3 (v1.2):** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, planillas y activos fijos. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
 
 ## Requisitos
 
@@ -282,6 +282,114 @@ Invoke-RestMethod -Uri 'http://127.0.0.1:3000/api/v1/transferencias?limite=20' -
 
 **Realizado en código:** rutas HTTP para autenticación, gestión básica de sucursales/medicamentos, movimientos iniciales/ajustes de inventario y transferencias completas (registro, despacho y recepción), con control de acceso y auditoría. Este código **no se ha ejecutado contra tu Oracle local desde aquí**. Por eso se incluye `npm run db:check` y pruebas API para tu entorno.
 
-**Pendiente de iteraciones:** flujo de efectivo; gastos de planilla; activos fijos; solicitudes y coordinación de entregas; consultas centralizadas de auditoría; conexión con React; despliegue en la nube. Todos esos procesos ya tienen tablas; no hay que crear módulos fuera del documento universitario.
+**Pendiente de iteraciones desde la versión 1.1:** flujo de efectivo; gastos de planilla; activos fijos; solicitudes y coordinación de entregas; consultas centralizadas de auditoría; conexión con React; despliegue en la nube. Todos esos procesos ya tienen tablas; no hay que crear módulos fuera del documento universitario.
 
 No es un sistema de farmacia de producción: no procesa pagos, recetas, facturación, tratamientos médicos ni datos reales de pacientes.
+
+---
+
+## Iteración 3 — Efectivo, gastos de planilla y activos fijos (v1.2)
+
+**Alcance:** se incorpora únicamente el control de efectivo, gasto agregado por período y valoración de activos que exige el documento universitario. Se reutilizan las tablas existentes `MOVIMIENTO_EFECTIVO`, `GASTO_PLANILLA`, `ACTIVO_FIJO`, `SUCURSAL`, `USUARIO` y `REGISTRO_AUDITORIA`. **No se modifica el esquema de Oracle XE ni se reinstalan los datos anteriores.** Transferencias, inventarios, autenticación y demás rutas siguen disponibles.
+
+### Actualizar v1.1 sin perder la configuración
+
+1. Haz copia de tu carpeta local del backend y detén el servidor (`Ctrl+C`).
+2. Descomprime el nuevo paquete. Copia **`src/`, `tests/`, `ejemplos/`, `LEEME.md` y `package.json`** sobre las carpetas de la versión anterior.
+3. **Conserva tu `.env` actual y no lo compartas.** No copies un archivo `.env` ni una carpeta `node_modules` desde el ZIP (no están incluidos).
+4. No ejecutes nuevamente `01_esquema.sql` ni `02_datos_prueba.sql` en DBeaver.
+5. En la carpeta del backend ejecuta:
+
+```powershell
+npm run check:syntax
+npm test
+npm run db:check
+npm run dev
+```
+
+La conexión ya configurada seguirá apuntando a `127.0.0.1:1521/XEPDB1` mediante tu `.env`.
+
+### API nueva (prefijo `/api/v1`)
+
+Los endpoints exigen JWT. `ADMIN_CENTRAL` consulta **todas** las sucursales; `ENCARGADO` consulta y escribe **solo en su sucursal**; `COORD_ENTREGAS` no accede a módulos administrativos.
+
+| Método | Ruta | Acceso | Función |
+|---|---|---|---|
+| GET | `/efectivo/movimientos` | Admin / encargado | Historial paginado. |
+| GET | `/efectivo/movimientos/:id` | Admin / encargado | Detalle de movimiento, respetando sucursal. |
+| GET | `/efectivo/resumen` | Admin / encargado | Ingresos, egresos y flujo neto por sucursal y global según acceso. |
+| POST | `/efectivo/movimientos` | Encargado | Registrar entrada o salida de efectivo. |
+| GET | `/planillas` | Admin / encargado | Consultar gastos por sucursal y mes. |
+| GET | `/planillas/:id` | Admin / encargado | Detalle según sucursal. |
+| GET | `/planillas/resumen` | Admin / encargado | Suma de gastos por sucursal / empresa. |
+| POST | `/planillas` | Encargado | Registrar monto total del período. |
+| PATCH | `/planillas/:id` | Encargado | Corregir **solo el monto**, conservando historial en auditoría. |
+| GET | `/activos` | Admin / encargado | Consultar activos de sucursal / empresa. |
+| GET | `/activos/:id` | Admin / encargado | Detalle según sucursal. |
+| GET | `/activos/resumen` | Admin / encargado | Valor de activos **VIGENTES** por defecto; filtro estado disponible. |
+| POST | `/activos` | Encargado | Registrar activo y valor declarado. |
+| PATCH | `/activos/:id` | Encargado | Corregir descripción, valor y/o cambiar estado VIGENTE / BAJA. |
+
+Las listas aceptan `?limite=50&desde=0` (máximo 100) y `?id_sucursal=N` (solo admin puede consultar una sucursal ajena). Los movimientos de efectivo aceptan `?tipo=INGRESO` o `EGRESO` y fechas inclusivas `?fecha_desde=2026-10-01&fecha_hasta=2026-10-31`. Las fechas se interpretan en **hora de Guatemala UTC-06:00**. Planillas acepta `?periodo_desde=2026-01&periodo_hasta=2026-12`, y activos `?estado=VIGENTE` o `BAJA`.
+
+Los totales monetarios se devuelven en **GTQ**. El flujo neto es `ingresos - egresos`; **no** representa saldo bancario ni conciliación contable. La planilla no crea automáticamente un movimiento de efectivo: se evita registrar gastos dos veces sin una función contable que el prototipo no contempla. No se calculan salarios individuales ni depreciación de activos. Los activos en estado BAJA no forman parte del valor vigente consolidado.
+
+**Importante, precisión de dinero:** los importes en las **peticiones** deben ser *cadenas* decimales JSON con punto y máximo 2 decimales, p. ej. `"125.50"`, no un número JSON `125.50`. Se convierten en centavos enteros antes de enviarse a Oracle. `monto` de efectivo debe ser mayor que cero; `monto_total` de planilla y `valor` de activo pueden ser cero. Máximo 12 cifras enteras, 2 decimales. Los importes **en las respuestas** provienen de `NUMBER(14,2)` y aparecen como números JSON según el driver.
+
+### Ejemplos de peticiones JSON
+
+**Efectivo**, `POST /api/v1/efectivo/movimientos`:
+
+```json
+{ "id_sucursal": 1, "tipo": "INGRESO", "concepto": "Ingreso ficticio de caja", "monto": "125.50" }
+```
+
+**Planilla**, `POST /api/v1/planillas`:
+
+```json
+{ "id_sucursal": 1, "periodo": "2027-01", "monto_total": "1200.00" }
+```
+
+Para corregirla sin duplicarla: `PATCH /api/v1/planillas/ID` con `{ "monto_total": "1250.00" }`. El período es único por sucursal; un segundo POST en el mismo período recibe `409 DUPLICADO`.
+
+**Activo fijo**, `POST /api/v1/activos`:
+
+```json
+{ "id_sucursal": 1, "codigo": "ACA-ACT-001", "descripcion": "Computadora de prueba", "valor": "3500.00" }
+```
+
+Para dar de baja sin eliminar historial: `PATCH /api/v1/activos/ID` con `{ "estado": "BAJA" }`.
+
+### Pruebas desde tu PC
+
+**A. Solo lectura, recomendada primero:** con el backend en ejecución, abre otra terminal PowerShell:
+
+```powershell
+.\ejemplos\prueba-administracion-lectura.ps1
+```
+
+Solicitará la contraseña de `admin@sigfar.test` y consultará los tres módulos sin modificar la BD.
+
+**B. En DBeaver (solo lectura):** abre `ejemplos/verificar-administracion-dbeaver.sql`. Incluye los totales globales, valores por sucursal, verificaciones de importes, duplicados y auditoría de datos creados desde el backend. Los contadores de errores deben ser cero. No usa resultados numéricos fijos: las cifras cambian al registrar movimientos legítimos.
+
+**C. Escritura de prueba, opcional y con cambios reales:**
+
+```powershell
+.\ejemplos\prueba-administracion-cambios.ps1 -ConfirmarCambios -PeriodoPlanilla 2027-01
+```
+
+Esta prueba **crea** un movimiento, un gasto de planilla y un activo; **corrige** el gasto y **da de baja** el activo. Solicita la contraseña del encargado. El período indicado debe estar libre para la sucursal (UNIQUE). Si se ejecuta varias veces, elige otro período. **No es una transacción global**: si una etapa falla, los pasos anteriores ya registrados permanecerán en la base y podrán auditarse. No se ejecuta dentro de `npm test`.
+
+### Diseño y restricciones
+
+- Las escrituras se ejecutan mediante `withTransaction` junto con su auditoría. Una falla en la misma transacción realiza `ROLLBACK`.
+- Solo se permite registrar en sucursales activas. Las consultas históricas siguen visibles aunque la sucursal posteriormente se desactive.
+- No hay operaciones `DELETE` ni edición de movimientos de efectivo: los registros conservan su trazabilidad; cualquier corrección requiere otra entrada o salida documentada.
+- La corrección de planillas y activos utiliza `FOR UPDATE NOWAIT` para serializar modificaciones simultáneas.
+- Los códigos de activos y pares `(sucursal, período)` de planillas son únicos por restricciones de Oracle; duplicados devuelven `409`.
+- Las consultas usan parámetros vinculados y listas blancas de campos, sin interpolar valores del cliente en SQL.
+- **Pruebas locales efectuadas aquí:** sintaxis JavaScript y pruebas unitarias sin Oracle; **pendiente:** ejecución HTTP real y pruebas de Oracle en tu computadora.
+
+### Estado después de v1.2
+
+**Implementado en código:** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, gastos de planilla, activos y registro técnico de auditoría. **Pendiente:** solicitudes y entregas; consulta centralizada de auditoría; interfaz React; despliegue en nube. No se agregaron pagos electrónicos, contabilidad, compras, nómina individual ni depreciaciones.
