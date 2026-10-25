@@ -1,10 +1,12 @@
 {
   "name": "sigfar-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Backend academico SIGFAR: Oracle XE XEPDB1, Node.js y Express",
+  "description": "Backend academico SIGFAR: Oracle XE XEPDB1, Node.js, Express y transferencias entre sucursales",
   "type": "module",
-  "engines": { "node": ">=20.0.0" },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",

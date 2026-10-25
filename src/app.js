@@ -5,6 +5,7 @@ import { makeAuthRouter } from './routes/auth.routes.js';
 import { makeSucursalesRouter } from './routes/sucursales.routes.js';
 import { makeMedicamentosRouter } from './routes/medicamentos.routes.js';
 import { makeInventariosRouter } from './routes/inventarios.routes.js';
+import { makeTransferenciasRouter } from './routes/transferencias.routes.js';
 import { authMiddleware } from './middleware/auth.js';
 import { errorMiddleware, HttpError } from './utils/errors.js';
 
@@ -24,6 +25,7 @@ export function makeApp(config) {
   app.use('/api/v1/sucursales', makeSucursalesRouter(authenticate));
   app.use('/api/v1/medicamentos', makeMedicamentosRouter(authenticate));
   app.use('/api/v1/inventarios', makeInventariosRouter(authenticate));
+  app.use('/api/v1/transferencias', makeTransferenciasRouter(authenticate));
   app.use((req, res, next) => next(new HttpError(404, 'RUTA_NO_ENCONTRADA', 'Ruta API no encontrada.')));
   app.use(errorMiddleware);
   return app;

@@ -1,6 +1,6 @@
 # SIGFAR — Backend académico (Node.js + Express + Oracle XE)
 
-**Iteración 1:** autenticación, sucursales, medicamentos e inventario. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
+**Iteración 2:** autenticación, sucursales, medicamentos, inventario y transferencias entre sucursales. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
 
 ## Requisitos
 
@@ -92,6 +92,11 @@ Prefijo: `http://127.0.0.1:3000/api/v1`. Las rutas excepto salud y login exigen 
 | GET | `/inventarios` | Todos (encargado: solo su sucursal) | Existente, reservado, disponible. |
 | GET | `/inventarios/movimientos` | ADMIN_CENTRAL, ENCARGADO (solo su sucursal) | Historial. |
 | POST | `/inventarios/movimientos` | ENCARGADO de la sucursal | Carga inicial o ajuste justificado. |
+| GET | `/transferencias` | ADMIN_CENTRAL o ENCARGADO participante | Listar transferencias; filtro opcional `estado` e `id_sucursal`. |
+| GET | `/transferencias/:id` | ADMIN_CENTRAL o ENCARGADO participante | Cabecera y renglones de la transferencia. |
+| POST | `/transferencias` | ENCARGADO de la sucursal de origen | Registrar transferencia pendiente sin cambiar inventario. |
+| POST | `/transferencias/:id/despachar` | ENCARGADO de origen | Descontar existencias disponibles y dejar `EN_TRANSITO`. |
+| POST | `/transferencias/:id/recibir` | ENCARGADO de destino | Agregar las existencias y dejar `RECIBIDA`. |
 
 Consultas de lista aceptan `?limite=50&desde=0` (límite máximo 100). Los inventarios y movimientos también aceptan `?id_sucursal=1&id_medicamento=2` (sujetos al rol); el catálogo acepta `?activo=S`; sucursales, `?activa=S`.
 
@@ -212,10 +217,71 @@ SIGFAR_Backend/
 - Se devuelven errores sin exponer consultas SQL, contraseñas ni detalles internos de Oracle.
 - Backend inicial escucha en **127.0.0.1**, apropiado para uso local. Más adelante se adaptará la configuración al servicio en la nube que exige la universidad.
 
+## Iteración 2 — Transferencias entre sucursales
+
+No se modificó ninguna tabla, índice, dato ficticio ni estructura del esquema Oracle verificado en DBeaver. El módulo nuevo usa **TRANSFERENCIA**, **DETALLE_TRANSFERENCIA**, **INVENTARIO_SUCURSAL**, **MOVIMIENTO_INVENTARIO** y **REGISTRO_AUDITORIA**, ya existentes.
+
+### Actualizar una instalación local que ya funciona
+
+1. Si `npm run dev` está funcionando, detén el servidor con `Ctrl+C`.
+2. **Conserva tu archivo `.env` actual** (no lo compartas ni lo reemplaces). Opcionalmente haz una copia de respaldo de la carpeta existente.
+3. Descomprime el nuevo ZIP. Copia la carpeta `src`, `tests`, `ejemplos`, `LEEME.md` y `package.json` del paquete nuevo sobre las correspondientes de tu backend anterior. El ZIP **no incluye** `.env` ni `node_modules`.
+4. Si ya instalaste las dependencias, son las mismas de la iteración anterior: normalmente no necesitas reinstalarlas. Si empiezas de cero, ejecuta `npm install`.
+5. Ejecuta `npm run check:syntax`, `npm test`, `npm run db:check` y `npm run dev`.
+6. Primero prueba con GET `/api/v1/transferencias` usando el administrador; deben verse al menos las dos transferencias ficticias anteriores. No deberían modificarse los inventarios.
+
+### Contrato de transferencia
+
+**Registrar:** `POST /api/v1/transferencias`, con token de `guatemala@sigfar.test` (encargado de sucursal 1) y JSON:
+
+```json
+{
+  "id_sucursal_origen": 1,
+  "id_sucursal_destino": 2,
+  "detalles": [
+    { "id_medicamento": 1, "cantidad": 1 },
+    { "id_medicamento": 2, "cantidad": 1 }
+  ]
+}
+```
+
+La respuesta HTTP `201` contiene `datos.id_transferencia` y `datos.estado = "REGISTRADA"`. Los IDs 1 y 2 corresponden a la base ficticia inicial. Para una instalación modificada, utiliza IDs reales obtenidos de `/sucursales` y `/medicamentos`.
+
+**Despachar:** `POST /api/v1/transferencias/ID_NUEVO/despachar` con token del **encargado de origen**, sin cuerpo. La API valida `cantidad_existente - cantidad_reservada`, bloquea los saldos y registra un `TRANSFERENCIA_SALIDA` por medicamento. La cabecera cambia a `EN_TRANSITO`.
+
+**Recibir:** `POST /api/v1/transferencias/ID_NUEVO/recibir` con token del **encargado de destino**, sin cuerpo. Se incrementan sus existencias, incluso si antes no tenía un registro de inventario para ese medicamento; se registra `TRANSFERENCIA_ENTRADA` y la cabecera cambia a `RECIBIDA`.
+
+En cada cambio, movimiento, actualización de inventario y auditoría se ejecutan en **una única transacción Oracle**. Si una operación falla, se revierten sus cambios. Una segunda petición de despacho/recepción, o una solicitud sin existencias suficientes, devuelve HTTP `409` sin alterar los saldos. Una transferencia registrada **no** descuenta stock hasta ser despachada.
+
+**Permisos:** el administrador puede consultar todas; un encargado consulta transferencias de su sucursal, pero solo **crea/despacha desde el origen** y **recibe en el destino**. El coordinador de entregas no gestiona transferencias.
+
+**Estados del modelo académico:** `REGISTRADA` → `EN_TRANSITO` → `RECIBIDA`. No se agregó cancelación, devolución, recepción parcial ni gestión avanzada de transporte porque no forma parte del alcance definido.
+
+**Pruebas con datos reales:** desde la carpeta del backend y con el servidor ejecutándose:
+
+```powershell
+.\ejemplos\prueba-transferencias.ps1 -ConfirmarCambios
+```
+
+Este comando **escribe datos en la BD**: crea y completa una transferencia de 1 unidad entre las sucursales de Guatemala y Quetzaltenango, y comprueba que se rechace una segunda recepción. Úsalo únicamente con datos ficticios, cuando quieras realizar la prueba de punta a punta; no se ejecuta como parte de `npm test`. Si una etapa falla, las etapas anteriores que ya se confirmaron pueden permanecer registradas.
+
+También se incluyen consultas **solo lectura** `ejemplos/verificar-transferencias-dbeaver.sql` para comprobar el historial de movimientos, el inventario y la auditoría desde DBeaver. La consulta de inconsistencias debe devolver **cero filas**.
+
+**Importante:** los 32 controles anteriores en `03_verificacion.sql` usan cifras iniciales fijas. Después de crear cualquier transferencia legítima los totales podrían cambiar, aunque la base de datos siga siendo coherente. Utiliza las verificaciones dinámicas para las nuevas operaciones.
+
+### Ejemplo de consulta de solo lectura (PowerShell)
+
+```powershell
+$body = @{ correo='admin@sigfar.test'; clave='Demo2026!' } | ConvertTo-Json
+$token = (Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:3000/api/v1/auth/login' -ContentType 'application/json' -Body $body).token
+$h = @{ Authorization = "Bearer $token" }
+Invoke-RestMethod -Uri 'http://127.0.0.1:3000/api/v1/transferencias?limite=20' -Headers $h
+```
+
 ## Alcance actual y pendiente
 
-**Realizado en código:** rutas HTTP para autenticación, gestión básica de sucursales/medicamentos y movimientos iniciales/ajustes de inventario, con control de acceso y auditoría. Este código **no se ha ejecutado contra tu Oracle local desde aquí**. Por eso se incluye `npm run db:check` y pruebas API para tu entorno.
+**Realizado en código:** rutas HTTP para autenticación, gestión básica de sucursales/medicamentos, movimientos iniciales/ajustes de inventario y transferencias completas (registro, despacho y recepción), con control de acceso y auditoría. Este código **no se ha ejecutado contra tu Oracle local desde aquí**. Por eso se incluye `npm run db:check` y pruebas API para tu entorno.
 
-**Pendiente de iteraciones:** transferencias; flujo de efectivo; gastos de planilla; activos fijos; solicitudes y coordinación de entregas; consultas centralizadas de auditoría; conexión con React; despliegue en la nube. Todos esos procesos ya tienen tablas; no hay que crear módulos fuera del documento universitario.
+**Pendiente de iteraciones:** flujo de efectivo; gastos de planilla; activos fijos; solicitudes y coordinación de entregas; consultas centralizadas de auditoría; conexión con React; despliegue en la nube. Todos esos procesos ya tienen tablas; no hay que crear módulos fuera del documento universitario.
 
 No es un sistema de farmacia de producción: no procesa pagos, recetas, facturación, tratamientos médicos ni datos reales de pacientes.
