@@ -9,6 +9,7 @@ import { makeTransferenciasRouter } from './routes/transferencias.routes.js';
 import { makeEfectivoRouter } from './routes/efectivo.routes.js';
 import { makePlanillasRouter } from './routes/planillas.routes.js';
 import { makeActivosRouter } from './routes/activos.routes.js';
+import { makeSolicitudesRouter } from './routes/solicitudes.routes.js';
 import { authMiddleware } from './middleware/auth.js';
 import { errorMiddleware, HttpError } from './utils/errors.js';
 
@@ -32,6 +33,7 @@ export function makeApp(config) {
   app.use('/api/v1/efectivo', makeEfectivoRouter(authenticate));
   app.use('/api/v1/planillas', makePlanillasRouter(authenticate));
   app.use('/api/v1/activos', makeActivosRouter(authenticate));
+  app.use('/api/v1/solicitudes', makeSolicitudesRouter(authenticate));
   app.use((req, res, next) => next(new HttpError(404, 'RUTA_NO_ENCONTRADA', 'Ruta API no encontrada.')));
   app.use(errorMiddleware);
   return app;

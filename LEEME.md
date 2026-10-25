@@ -1,6 +1,6 @@
 # SIGFAR — Backend académico (Node.js + Express + Oracle XE)
 
-**Iteración 3 (v1.2):** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, planillas y activos fijos. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
+**Iteración 4 (v1.3):** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, planillas, activos fijos y solicitudes/entregas. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
 
 ## Requisitos
 
@@ -70,7 +70,7 @@ O sin recarga automática: `npm start`. Al iniciar se muestra la URL de salud:
 | `guatemala@sigfar.test` | ENCARGADO | Consulta y ajusta inventario de sucursal 1. |
 | `quetzaltenango@sigfar.test` | ENCARGADO | Sucursal 2. |
 | `escuintla@sigfar.test` | ENCARGADO | Sucursal 3. |
-| `entregas@sigfar.test` | COORD_ENTREGAS | Consulta sucursales, medicamentos y disponibilidad; las entregas se implementarán en otra iteración. |
+| `entregas@sigfar.test` | COORD_ENTREGAS | Registra solicitudes, consulta disponibilidad y confirma/cancela entregas. |
 
 ## API — rutas ya implementadas
 
@@ -392,4 +392,111 @@ Esta prueba **crea** un movimiento, un gasto de planilla y un activo; **corrige*
 
 ### Estado después de v1.2
 
-**Implementado en código:** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, gastos de planilla, activos y registro técnico de auditoría. **Pendiente:** solicitudes y entregas; consulta centralizada de auditoría; interfaz React; despliegue en nube. No se agregaron pagos electrónicos, contabilidad, compras, nómina individual ni depreciaciones.
+**Implementado en código:** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, gastos de planilla, activos y registro técnico de auditoría. **Pendiente:** consulta centralizada de auditoría; interfaz React; despliegue en nube. No se agregaron pagos electrónicos, contabilidad, compras, nómina individual ni depreciaciones.
+
+
+---
+
+## Actualizacion v1.3: solicitudes y entregas de medicamentos
+
+El paquete v1.3 es **completo** e incluye todos los archivos de v1.2. Para actualizar tu instalacion validada:
+
+1. Deten Node (`Ctrl+C`) y guarda una copia del backend actual.
+2. Extrae el ZIP v1.3 y copia sus archivos al proyecto local, **sin sobrescribir tu `.env`**.
+3. Ejecuta `npm run check:syntax`, `npm test`, `npm run db:check` y `npm run dev`.
+4. **No ejecutes nuevamente los scripts SQL de creacion ni de datos ficticios.** El esquema Oracle XE no cambia.
+5. Desde otra terminal PowerShell, ejecuta `.\ejemplos\prueba-entregas-lectura.ps1`.
+
+### API de solicitudes (prefijo `/api/v1`)
+
+Todos estos endpoints exigen autenticacion JWT. Para el flujo principal, `COORD_ENTREGAS` crea/consulta/confirma/cancela, y `ENCARGADO` despacha unicamente entregas asignadas a su sucursal. El coordinador o encargado asignado marca como entregada. `ADMIN_CENTRAL` solo consulta.
+
+| Metodo | Endpoint | Rol | Operacion |
+|---|---|---|---|
+| GET | `/solicitudes` | Admin / Coord / Encargado asignado | Lista por rol, filtro `estado`, `id_sucursal`, paginacion. |
+| GET | `/solicitudes/:id` | Admin / Coord / Encargado asignado | Cabecera, detalles y reservas. |
+| POST | `/solicitudes/disponibilidad` | Admin / Coord | Busca sucursales elegibles sin crear solicitud. |
+| POST | `/solicitudes` | Coord | Crea solicitud en `PENDIENTE`, con medicamentos. |
+| GET | `/solicitudes/:id/opciones` | Admin / Coord | Busca sucursales con cobertura y stock suficiente. |
+| POST | `/solicitudes/:id/confirmar` | Coord | Asigna farmacia, pago, reserva unidades y calcula tiempo estimado. |
+| POST | `/solicitudes/:id/despachar` | Encargado de sucursal asignada | Descuenta unidades, consume reservas y deja `DESPACHADA`. |
+| POST | `/solicitudes/:id/entregar` | Coord / Encargado asignado | Marca `ENTREGADA`, registra fecha real y permite identificar retraso. |
+| POST | `/solicitudes/:id/cancelar` | Coord | Solo antes de despacho. Libera reservas activas si estaba confirmada. |
+
+#### Ejemplo: nueva solicitud
+
+`POST /api/v1/solicitudes` autenticado como `entregas@sigfar.test`:
+
+```json
+{
+  "cliente_nombre": "Cliente Ficticio",
+  "cliente_telefono": "5555-1000",
+  "departamento_entrega": "Guatemala",
+  "municipio_entrega": "Guatemala",
+  "direccion_entrega": "Direccion ficticia zona 1",
+  "detalles": [
+    { "id_medicamento": 1, "cantidad": 2 },
+    { "id_medicamento": 4, "cantidad": 1 }
+  ]
+}
+```
+
+Con el `id_solicitud` de la respuesta, ejecuta `GET /api/v1/solicitudes/:id/opciones`. Para confirmar:
+
+```json
+{ "id_sucursal": 1, "forma_pago": "EFECTIVO" }
+```
+
+`POST /api/v1/solicitudes/:id/confirmar` solo admite estos dos campos. Las otras transiciones (`/despachar`, `/entregar`, `/cancelar`) reciben `{}` o cuerpo vacio. `estado` no se puede cambiar arbitrariamente.
+
+La consulta de disponibilidad **sin registrar pedido** usa `POST /api/v1/solicitudes/disponibilidad` con:
+
+```json
+{
+  "departamento_entrega": "Guatemala",
+  "municipio_entrega": "Guatemala",
+  "detalles": [{ "id_medicamento": 1, "cantidad": 1 }]
+}
+```
+
+Retorna farmacias que cubren el mismo departamento y municipio, tienen stock suficiente para **todos** los medicamentos y están activas. La consulta considera `cantidad_existente - cantidad_reservada`. Los tiempos estimados se miden en minutos configurados por farmacia, no son predicciones de trafico.
+
+### Integridad de inventario y estados
+
+```text
+PENDIENTE -> CONFIRMADA -> DESPACHADA -> ENTREGADA
+     |             |
+     +-> CANCELADA <-+
+```
+
+- Al confirmar se bloquean la solicitud y los inventarios implicados (`FOR UPDATE NOWAIT`), se reservan todas las cantidades y se actualiza el estado con una sola transaccion.
+- Al despachar se consumen las reservas y se registran movimientos `ENTREGA_SALIDA`; el estado se actualiza con los movimientos en una transaccion unica.
+- Al cancelar antes de despachar se liberan todas las reservas sin registrar salida de medicamento.
+- No se puede confirmar dos veces, despachar dos veces, cancelar despues de despachar ni marcar entregada sin despacho.
+- Se genera bitacora `REGISTRO_AUDITORIA` para registro y cada transicion.
+- Campo `tardia` (`S`/`N`) en consultas: para `ENTREGADA` compara fecha real con estimada; para `CONFIRMADA` y `DESPACHADA` compara la hora actual con estimada.
+- Las solicitudes demo precargadas siguen disponibles; el sistema reutiliza las mismas 15 tablas.
+
+### Comprobaciones locales
+
+**A. Solo lectura** (recomendada primero):
+
+```powershell
+.\ejemplos\prueba-entregas-lectura.ps1
+```
+
+**B. DBeaver (solo lectura):** abre `ejemplos/verificar-entregas-dbeaver.sql`. Las consultas de conciliacion #3-#6 deben devolver **cero filas**; los restantes bloques muestran historiales.
+
+**C. Prueba de escritura opcional, sobre tus datos ficticios:**
+
+```powershell
+.\ejemplos\prueba-entregas-cambios.ps1 -ConfirmarCambios
+```
+
+Pide credenciales de coordinador y encargado, crea dos solicitudes nuevas: una se confirma y cancela (libera reserva); la otra se confirma, despacha y entrega (consume una unidad). **Modifica los datos de Oracle XE permanentemente.** No esta incluida en `npm test`. Si falla a mitad de camino, las operaciones confirmadas ya permanecen y se pueden consultar en la API/DBeaver.
+
+**IMPORTANTE:** las verificaciones de sintaxis y tests sin Oracle no reemplazan probar las operaciones reales contra `XEPDB1` en tu equipo. Si no existe una sucursal elegible o los datos demo cambiaron, ajusta los ejemplos de prueba, no reinicies los datos de produccion.
+
+### Alcance
+
+No se implementan portal web para clientes, interfaz de telefonia, mapa/GPS, rutas optimizadas, pagos reales ni facturacion. Esta API deja disponible la informacion minima para futura integracion sin desarrollar esos sistemas externos. El siguiente componente pendiente es la **consulta centralizada de auditoria**; despues se abordara React.
