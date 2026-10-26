@@ -1,4 +1,4 @@
-# MODIFICA Oracle XE. Requiere -ConfirmarCambios.
+﻿# MODIFICA Oracle XE. Requiere -ConfirmarCambios.
 # Crea dos solicitudes ficticias. La primera se confirma/cancela (libera reserva),
 # y la segunda se confirma/despacha/entrega (descuenta una unidad).
 # Usuario coordinador de entregas para registros y encargado de Guatemala para despacho.

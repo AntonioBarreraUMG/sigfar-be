@@ -1,6 +1,31 @@
 # SIGFAR — Backend académico (Node.js + Express + Oracle XE)
 
-**Iteración 4 (v1.3):** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, planillas, activos fijos y solicitudes/entregas. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
+**Iteración 5 (v1.4):** autenticación, sucursales, medicamentos, inventario, transferencias, efectivo, planillas, activos fijos y solicitudes/entregas y consulta centralizada de auditoría. Usa **directamente** las 15 tablas ya instaladas y verificadas en DBeaver: no contiene SQL de creación, migraciones ni modificaciones del esquema. Requiere la BD Oracle XE funcionando en **tu propia computadora**, servicio `XEPDB1`.
+
+
+## Iteración 5: consulta centralizada de auditoría (v1.4)
+
+Además de todas las rutas anteriores, la versión v1.4 incorpora **tres endpoints de solo lectura**, restringidos al rol `ADMIN_CENTRAL`:
+
+- `GET /api/v1/auditoria/registros` — listado paginado (`?limite=20&desde=0`).
+- `GET /api/v1/auditoria/registros/:id` — detalle con datos anteriores y posteriores, si existen.
+- `GET /api/v1/auditoria/resumen` — total y agrupaciones por entidad y por sucursal.
+
+Filtros: `id_sucursal`, `id_usuario`, `entidad`, `accion`, `id_registro`, `fecha_desde`, `fecha_hasta` (fechas `AAAA-MM-DD` en UTC-06:00). Ejemplo:
+
+```text
+GET /api/v1/auditoria/registros?id_sucursal=1&entidad=TRANSFERENCIA&fecha_desde=2026-10-01&limite=10
+```
+
+**Prueba de solo lectura en PowerShell:**
+
+```powershell
+.\ejemplos\prueba-auditoria-lectura.ps1
+```
+
+Para contrastar los resultados sin escribir en Oracle, abre `ejemplos/verificar-auditoria-dbeaver.sql` en DBeaver. El administrador puede consultar todas las sucursales; encargados y coordinadores no pueden leer la bitácora centralizada (HTTP 403). No hay operaciones de edición o borrado para este recurso.
+
+Consulta `CAMBIOS_V1.4.md` para los parámetros, respuestas y casos de prueba. **La actualización no requiere scripts SQL, migraciones ni reinicialización de datos**. Mantén tu `.env` actual al actualizar desde v1.3 o v1.3.1.
 
 ## Requisitos
 
