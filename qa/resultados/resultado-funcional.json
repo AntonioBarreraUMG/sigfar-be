@@ -1,0 +1,277 @@
+{
+  "fecha": "2026-10-26T03:41:31.787Z",
+  "modo": "escritura",
+  "url": "http://127.0.0.1:3001/api/v1",
+  "advertencia": "Las escrituras quedan almacenadas en Oracle; no hay limpieza destructiva.",
+  "total": 38,
+  "aprobadas": 38,
+  "fallidas": 0,
+  "resultados": [
+    {
+      "id": "F-001",
+      "reqs": "RNF-02",
+      "caso": "HTTP salud",
+      "estado": "OK",
+      "ms": 110
+    },
+    {
+      "id": "F-002",
+      "reqs": "RF-01",
+      "caso": "Rechaza acceso sin token",
+      "estado": "OK",
+      "ms": 6
+    },
+    {
+      "id": "F-003",
+      "reqs": "RF-01",
+      "caso": "Rechaza token inválido",
+      "estado": "OK",
+      "ms": 4
+    },
+    {
+      "id": "F-004",
+      "reqs": "RF-01",
+      "caso": "Inicio de sesión con credenciales incorrectas",
+      "estado": "OK",
+      "ms": 126
+    },
+    {
+      "id": "F-LOGIN-ADMIN",
+      "reqs": "RF-01",
+      "caso": "Inicio de sesión admin",
+      "estado": "OK",
+      "ms": 54
+    },
+    {
+      "id": "F-LOGIN-ORIGEN",
+      "reqs": "RF-01",
+      "caso": "Inicio de sesión origen",
+      "estado": "OK",
+      "ms": 46
+    },
+    {
+      "id": "F-LOGIN-DESTINO",
+      "reqs": "RF-01",
+      "caso": "Inicio de sesión destino",
+      "estado": "OK",
+      "ms": 44
+    },
+    {
+      "id": "F-LOGIN-COORD",
+      "reqs": "RF-01",
+      "caso": "Inicio de sesión coord",
+      "estado": "OK",
+      "ms": 49
+    },
+    {
+      "id": "F-005",
+      "reqs": "RF-01",
+      "caso": "Consulta /auth/me por rol",
+      "estado": "OK",
+      "ms": 78
+    },
+    {
+      "id": "F-006",
+      "reqs": "RF-02",
+      "caso": "Sucursales: listado, detalle y alcance",
+      "estado": "OK",
+      "ms": 102
+    },
+    {
+      "id": "F-007",
+      "reqs": "RF-03",
+      "caso": "Medicamentos: catálogo y detalle",
+      "estado": "OK",
+      "ms": 36
+    },
+    {
+      "id": "F-008",
+      "reqs": "RF-05",
+      "caso": "Inventario: existencia-reserva=disponible",
+      "estado": "OK",
+      "ms": 115
+    },
+    {
+      "id": "F-009",
+      "reqs": "RF-04,RF-05",
+      "caso": "Historial movimientos inventario",
+      "estado": "OK",
+      "ms": 52
+    },
+    {
+      "id": "F-010",
+      "reqs": "RF-06,RF-07",
+      "caso": "Transferencias: listado y detalle",
+      "estado": "OK",
+      "ms": 539
+    },
+    {
+      "id": "F-011",
+      "reqs": "RF-08,RF-09",
+      "caso": "Efectivo: movimientos y resumen",
+      "estado": "OK",
+      "ms": 73
+    },
+    {
+      "id": "F-012",
+      "reqs": "RF-11",
+      "caso": "Planillas: períodos y totales",
+      "estado": "OK",
+      "ms": 70
+    },
+    {
+      "id": "F-013",
+      "reqs": "RF-10",
+      "caso": "Activos: detalle y valorización",
+      "estado": "OK",
+      "ms": 81
+    },
+    {
+      "id": "F-014",
+      "reqs": "RF-12,RF-15",
+      "caso": "Solicitudes: listado y detalle",
+      "estado": "OK",
+      "ms": 96
+    },
+    {
+      "id": "F-015",
+      "reqs": "RF-13,RF-14,RF-17",
+      "caso": "API de disponibilidad para integración",
+      "estado": "OK",
+      "ms": 65
+    },
+    {
+      "id": "F-016",
+      "reqs": "RF-16",
+      "caso": "Auditoría: registros, filtros, resumen y detalle",
+      "estado": "OK",
+      "ms": 124
+    },
+    {
+      "id": "F-017",
+      "reqs": "RF-16",
+      "caso": "Auditoría inmutable por API",
+      "estado": "OK",
+      "ms": 8
+    },
+    {
+      "id": "F-018",
+      "reqs": "RNF-05",
+      "caso": "Validación de paginación y entradas incorrectas",
+      "estado": "OK",
+      "ms": 53
+    },
+    {
+      "id": "F-SEC-001",
+      "reqs": "RF-01,RNF-05",
+      "caso": "Encargado no puede consultar finanzas de otra sucursal",
+      "estado": "OK",
+      "ms": 11
+    },
+    {
+      "id": "F-PERF-001",
+      "reqs": "RNF-09",
+      "caso": "Consulta de inventario en el tiempo objetivo local",
+      "estado": "OK",
+      "ms": 77
+    },
+    {
+      "id": "F-019",
+      "reqs": "RF-02",
+      "caso": "Sucursales: alta, detalle y modificación",
+      "estado": "OK",
+      "ms": 278
+    },
+    {
+      "id": "F-020",
+      "reqs": "RF-03",
+      "caso": "Medicamentos: alta, modificación y lectura",
+      "estado": "OK",
+      "ms": 64
+    },
+    {
+      "id": "F-021",
+      "reqs": "RF-04,RF-05",
+      "caso": "Inventario inicial en dos sucursales y ajustes",
+      "estado": "OK",
+      "ms": 168
+    },
+    {
+      "id": "F-022",
+      "reqs": "RF-06,RF-07",
+      "caso": "Transferencia: creación, permisos, despacho, recepción",
+      "estado": "OK",
+      "ms": 214
+    },
+    {
+      "id": "F-023",
+      "reqs": "RF-08,RF-09",
+      "caso": "Efectivo: ingreso, egreso y cálculo del flujo",
+      "estado": "OK",
+      "ms": 115
+    },
+    {
+      "id": "F-024",
+      "reqs": "RF-11",
+      "caso": "Planilla: registro, periodo único y corrección auditada",
+      "estado": "OK",
+      "ms": 181
+    },
+    {
+      "id": "F-025",
+      "reqs": "RF-10",
+      "caso": "Activo fijo: registro, actualización, baja y valorización",
+      "estado": "OK",
+      "ms": 145
+    },
+    {
+      "id": "F-026",
+      "reqs": "RF-12,RF-13,RF-14",
+      "caso": "Solicitud: elegibilidad, confirmación y reserva",
+      "estado": "OK",
+      "ms": 160
+    },
+    {
+      "id": "F-027",
+      "reqs": "RF-13,RF-15",
+      "caso": "Solicitud: cancelar y liberar reserva",
+      "estado": "OK",
+      "ms": 96
+    },
+    {
+      "id": "F-028",
+      "reqs": "RF-12,RF-15",
+      "caso": "Solicitud: confirmar, despachar y entregar sin duplicados",
+      "estado": "OK",
+      "ms": 161
+    },
+    {
+      "id": "F-029",
+      "reqs": "RF-13",
+      "caso": "Solicitud sin existencias: rechaza confirmación",
+      "estado": "OK",
+      "ms": 67
+    },
+    {
+      "id": "F-030",
+      "reqs": "RF-16",
+      "caso": "Auditoría: trazabilidad real de las nuevas operaciones",
+      "estado": "OK",
+      "ms": 99
+    },
+    {
+      "id": "F-CON-001",
+      "reqs": "RF-06,RF-07,RNF-06",
+      "caso": "Dos despachos simultáneos: solo uno se confirma",
+      "estado": "OK",
+      "ms": 612
+    },
+    {
+      "id": "F-CON-002",
+      "reqs": "RF-13,RNF-06",
+      "caso": "Doble confirmación concurrente: una única reserva",
+      "estado": "OK",
+      "ms": 110
+    }
+  ]
+}

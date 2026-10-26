@@ -1,0 +1,93 @@
+{
+  "tipo": "estatico",
+  "fecha": "2026-10-26T03:43:19.621Z",
+  "total": 21,
+  "ok": 21,
+  "errores": 0,
+  "pruebas": [
+    {
+      "nombre": "Estructura de 15 tablas",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Declaración de 30 FK",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Índices de consulta (11)",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Están las 15 entidades previstas",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas auth",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas sucursales",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas medicamentos",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas inventarios",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas transferencias",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas efectivo",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas planillas",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas activos",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas solicitudes",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Rutas montadas auditoria",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Auditoría solo de lectura por API",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Transacciones disponibles para escrituras",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Control de reserva e inventario disponible",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Registro de movimientos de transferencia",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Registro de auditoría en cambios administrativos",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Configuración Oracle XEPDB1 incluida",
+      "estado": "OK"
+    },
+    {
+      "nombre": "Pruebas unitarias existentes",
+      "estado": "OK"
+    }
+  ]
+}
