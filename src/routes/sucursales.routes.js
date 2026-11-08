@@ -55,6 +55,19 @@ export function makeSucursalesRouter(authenticate) {
     `, binds)).rows);
     res.json({ datos: apiRows(rows), paginacion: { desde: offset, limite: limit } });
   }));
+  // Catálogo reducido para que un encargado elija el destino de una transferencia.
+  // No concede acceso a la administración ni al detalle de otras sucursales.
+  router.get('/destinos-transferencia', requireRole(ROLES.ENCARGADO), asyncHandler(async (req, res) => {
+    const { offset, limit } = pagination(req.query);
+    const rows = await withConnection(async conn => (await conn.execute(`
+      SELECT id_sucursal, codigo, nombre, departamento, municipio
+      FROM sucursal
+      WHERE activa = 'S' AND id_sucursal <> :origen
+      ORDER BY nombre, id_sucursal
+      OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY
+    `, { origen: req.usuario.ID_SUCURSAL, offset, limite: limit })).rows);
+    res.json({ datos: apiRows(rows), paginacion: { desde: offset, limite: limit } });
+  }));
   router.get('/:id', asyncHandler(async (req, res) => {
     const id = scopeSucursal(req.usuario, req.params.id);
     const row = await withConnection(async conn => (await conn.execute(`SELECT ${SELECT_FIELDS} FROM sucursal WHERE id_sucursal = :id`, { id })).rows[0]);
