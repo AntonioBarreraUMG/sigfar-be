@@ -29,7 +29,7 @@ export function makeAuthRouter({ jwtSecret, jwtExpiresIn, authenticate }) {
       return result.rows[0];
     });
     if (!usuario || !(await verifyPassword(clave, usuario.CLAVE_HASH))) {
-      throw new HttpError(401, 'CREDENCIALES_INVALIDAS', 'Credenciales incorrectas.');
+      throw new HttpError(401, 'CREDENCIALES_INVALIDAS', 'Credenciales incorrectas o usuario inactivo.');
     }
     const token = jwt.sign({}, jwtSecret, {
       algorithm: 'HS256', subject: String(usuario.ID_USUARIO), issuer: 'sigfar', expiresIn: jwtExpiresIn
