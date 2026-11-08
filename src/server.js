@@ -11,8 +11,10 @@ try {
            SYS_CONTEXT('USERENV','CON_NAME') AS contenedor FROM dual
   `)).rows[0]);
   console.log(`Oracle conectado: ${config.oracle.connectString} | esquema=${dbInfo.ESQUEMA} | contenedor=${dbInfo.CONTENEDOR}`);
-  server = makeApp(config).listen(config.port, '127.0.0.1', () => {
-    console.log(`SIGFAR API lista en http://127.0.0.1:${config.port}/api/v1/health`);
+  // En local conserva localhost; Cloud Run requiere escuchar en todas las interfaces.
+  const host = process.env.K_SERVICE ? '0.0.0.0' : '127.0.0.1';
+  server = makeApp(config).listen(config.port, host, () => {
+    console.log(`SIGFAR API lista en ${host}:${config.port} (/api/v1/health)`);
   });
 } catch (error) {
   console.error('No se pudo iniciar SIGFAR:', error.message);
