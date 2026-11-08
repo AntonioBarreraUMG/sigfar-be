@@ -3,7 +3,7 @@ import { withConnection, oracledb } from '../db/oracle.js';
 import { asyncHandler } from '../middleware/async-handler.js';
 import { requireRole } from '../middleware/auth.js';
 import { ROLES } from '../utils/authorization.js';
-import { positiveId, pagination } from '../utils/validation.js';
+import { positiveId, pagination, textField } from '../utils/validation.js';
 import { notFound } from '../utils/errors.js';
 import { apiRows } from '../utils/rows.js';
 import { construirFiltrosAuditoria, formatearDetalleAuditoria } from '../utils/auditoria.js';
@@ -12,6 +12,33 @@ import { construirFiltrosAuditoria, formatearDetalleAuditoria } from '../utils/a
 export function makeAuditoriaRouter(authenticate) {
   const router = Router();
   router.use(authenticate, requireRole(ROLES.ADMIN));
+
+  // Listas para filtros existentes: no permiten modificar la bitácora.
+  router.get('/opciones-filtros', asyncHandler(async (req, res) => {
+    const datos = await withConnection(async conn => {
+      const usuarios = await conn.execute('SELECT id_usuario, nombre, correo FROM usuario ORDER BY nombre, id_usuario');
+      const entidades = await conn.execute('SELECT DISTINCT entidad FROM registro_auditoria ORDER BY entidad');
+      const acciones = await conn.execute('SELECT DISTINCT accion FROM registro_auditoria ORDER BY accion');
+      return {
+        usuarios: apiRows(usuarios.rows),
+        entidades: entidades.rows.map(row => row.ENTIDAD),
+        acciones: acciones.rows.map(row => row.ACCION)
+      };
+    });
+    res.json({ datos });
+  }));
+
+  router.get('/opciones-registros', asyncHandler(async (req, res) => {
+    const entidad = textField(req.query.entidad, 'entidad', 60);
+    const { offset, limit } = pagination(req.query);
+    const rows = await withConnection(async conn => (await conn.execute(`
+      SELECT DISTINCT id_registro FROM registro_auditoria
+      WHERE entidad = :entidad
+      ORDER BY id_registro
+      OFFSET :offset ROWS FETCH NEXT :limite ROWS ONLY
+    `, { entidad, offset, limite: limit })).rows);
+    res.json({ datos: rows.map(row => row.ID_REGISTRO), paginacion: { desde: offset, limite: limit } });
+  }));
 
   // Mantener '/registros' antes que cualquier ruta dinamica.
   router.get('/registros', asyncHandler(async (req, res) => {
