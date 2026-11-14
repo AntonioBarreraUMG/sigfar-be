@@ -13,7 +13,7 @@ export function parseUsuario(body, { create = false } = {}) {
   allowedFields(body, permitted, { partial: true });
   if (create) {
     const required = ['nombre', 'correo', 'rol', 'clave'];
-    const missing = required.filter(key => !(key in body));
+    const missing = required.filter((key) => !(key in body));
     if (missing.length) throw badRequest(`Faltan campos: ${missing.join(', ')}.`);
   }
   const parsed = {};
@@ -39,10 +39,12 @@ export function parseUsuario(body, { create = false } = {}) {
 
 export function resolverAsignacion({ rol, id_sucursal }) {
   if (rol === ROLES.ENCARGADO) {
-    if (id_sucursal === null || id_sucursal === undefined) throw badRequest('El encargado debe tener una sucursal asignada.');
+    if (id_sucursal === null || id_sucursal === undefined)
+      throw badRequest('El encargado debe tener una sucursal asignada.');
     return id_sucursal;
   }
-  if (id_sucursal !== null && id_sucursal !== undefined) throw badRequest('Este rol no debe tener una sucursal asignada.');
+  if (id_sucursal !== null && id_sucursal !== undefined)
+    throw badRequest('Este rol no debe tener una sucursal asignada.');
   return null;
 }
 

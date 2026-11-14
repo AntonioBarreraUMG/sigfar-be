@@ -14,41 +14,41 @@
 
 ### Matriz de requerimientos funcionales
 
-| ID | Alcance validado en código | Evidencia/Pruebas automatizadas | Estado |
-|---|---|---|---|
-| RF-01 | Autenticación scrypt/JWT, roles, restricción de sucursal | F-002 a F-005, F-SEC-001, tests unitarios | Implementado; E2E pendiente |
-| RF-02 | Alta, consulta y modificación de sucursales | F-006, F-019 | Implementado; E2E pendiente |
-| RF-03 | Alta, consulta y modificación de medicamentos | F-007, F-020 | Implementado; E2E pendiente |
-| RF-04 | Inventario inicial y ajustes registrados | F-009, F-021 | Implementado; E2E pendiente |
-| RF-05 | Existencias por sucursal, reservadas y disponibles | F-008, F-021, F-022 | Implementado; E2E pendiente |
-| RF-06 | Registrar transferencias entre sucursales | F-010, F-022 | Implementado; E2E pendiente |
-| RF-07 | Despachar y recibir con saldos consistentes | F-022, F-CON-001 | Implementado; E2E y concurrencia pendientes |
-| RF-08 | Registrar ingresos y egresos de efectivo | F-011, F-023 | Implementado; E2E pendiente |
-| RF-09 | Consultar flujo de efectivo y total por empresa | F-011, F-023 | Implementado; E2E pendiente |
-| RF-10 | Activos fijos, valor, cambios y baja | F-013, F-025 | Implementado; E2E pendiente |
-| RF-11 | Gastos de planilla por sucursal y período | F-012, F-024 | Implementado; E2E pendiente |
-| RF-12 | Solicitud y detalle de medicamentos | F-014, F-026, F-028 | Implementado; E2E pendiente |
-| RF-13 | Elegibilidad por ubicación y existencia | F-015, F-026, F-029 | Implementado; E2E pendiente |
-| RF-14 | Asignar sucursal, forma de pago y ETA | F-015, F-026 | Implementado; E2E pendiente |
-| RF-15 | Estados, reservas, cancelación, despacho, entrega y tardanza | F-014, F-027, F-028 | Implementado; E2E pendiente |
-| RF-16 | Bitácora central, filtros, detalle y resumen | F-016, F-017, F-030 | Implementado; E2E pendiente |
-| RF-17 | API REST de disponibilidad/solicitudes preparada para integración futura | F-015, F-026 | Interfaz API implementada; integración externa no requerida ahora |
+| ID    | Alcance validado en código                                               | Evidencia/Pruebas automatizadas           | Estado                                                            |
+| ----- | ------------------------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------- |
+| RF-01 | Autenticación scrypt/JWT, roles, restricción de sucursal                 | F-002 a F-005, F-SEC-001, tests unitarios | Implementado; E2E pendiente                                       |
+| RF-02 | Alta, consulta y modificación de sucursales                              | F-006, F-019                              | Implementado; E2E pendiente                                       |
+| RF-03 | Alta, consulta y modificación de medicamentos                            | F-007, F-020                              | Implementado; E2E pendiente                                       |
+| RF-04 | Inventario inicial y ajustes registrados                                 | F-009, F-021                              | Implementado; E2E pendiente                                       |
+| RF-05 | Existencias por sucursal, reservadas y disponibles                       | F-008, F-021, F-022                       | Implementado; E2E pendiente                                       |
+| RF-06 | Registrar transferencias entre sucursales                                | F-010, F-022                              | Implementado; E2E pendiente                                       |
+| RF-07 | Despachar y recibir con saldos consistentes                              | F-022, F-CON-001                          | Implementado; E2E y concurrencia pendientes                       |
+| RF-08 | Registrar ingresos y egresos de efectivo                                 | F-011, F-023                              | Implementado; E2E pendiente                                       |
+| RF-09 | Consultar flujo de efectivo y total por empresa                          | F-011, F-023                              | Implementado; E2E pendiente                                       |
+| RF-10 | Activos fijos, valor, cambios y baja                                     | F-013, F-025                              | Implementado; E2E pendiente                                       |
+| RF-11 | Gastos de planilla por sucursal y período                                | F-012, F-024                              | Implementado; E2E pendiente                                       |
+| RF-12 | Solicitud y detalle de medicamentos                                      | F-014, F-026, F-028                       | Implementado; E2E pendiente                                       |
+| RF-13 | Elegibilidad por ubicación y existencia                                  | F-015, F-026, F-029                       | Implementado; E2E pendiente                                       |
+| RF-14 | Asignar sucursal, forma de pago y ETA                                    | F-015, F-026                              | Implementado; E2E pendiente                                       |
+| RF-15 | Estados, reservas, cancelación, despacho, entrega y tardanza             | F-014, F-027, F-028                       | Implementado; E2E pendiente                                       |
+| RF-16 | Bitácora central, filtros, detalle y resumen                             | F-016, F-017, F-030                       | Implementado; E2E pendiente                                       |
+| RF-17 | API REST de disponibilidad/solicitudes preparada para integración futura | F-015, F-026                              | Interfaz API implementada; integración externa no requerida ahora |
 
 ### Requerimientos no funcionales y de tecnología
 
-| Código | Evaluación |
-|---|---|
-| RNF-01: React | **Pendiente:** la interfaz no se ha desarrollado. |
-| RNF-02: Node.js/Express | **Verificado por inspección:** backend Express modular disponible. |
-| RNF-03: Oracle XE | **Verificado por usuario:** conexión real en XEPDB1 y 15 tablas. |
-| RNF-04: nube | **Pendiente:** instalación actual local; falta desplegar con servicio cloud. |
-| RNF-05: seguridad | **Parcial:** JWT, hash scrypt, roles y permisos implementados; falta E2E negativo y revisar configuración al desplegar. |
-| RNF-06: consistencia transaccional | **Parcial:** commits/rollbacks y locks en código; faltan E2E y competencia real (`--concurrencia`). |
-| RNF-07: auditabilidad | **Parcial:** bitácora registrada en transacciones; probar filtros y exactitud de snapshots E2E. |
-| RNF-08: interfaz en español | **Pendiente:** backend usa respuestas en español; interfaz React no construida. |
-| RNF-09: respuesta usual <= 3 s | **Pendiente de medición:** caso F-PERF-001 sobre backend local. |
-| RNF-10: HTTP/JSON | **Implementado:** rutas REST y respuestas JSON; HTTPS deberá configurarse en nube. |
-| RNF-11: datos ficticios | **Verificado por juego de prueba:** 3 sucursales, 4 medicamentos, operaciones ficticias. |
+| Código                             | Evaluación                                                                                                              |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| RNF-01: React                      | **Pendiente:** la interfaz no se ha desarrollado.                                                                       |
+| RNF-02: Node.js/Express            | **Verificado por inspección:** backend Express modular disponible.                                                      |
+| RNF-03: Oracle XE                  | **Verificado por usuario:** conexión real en XEPDB1 y 15 tablas.                                                        |
+| RNF-04: nube                       | **Pendiente:** instalación actual local; falta desplegar con servicio cloud.                                            |
+| RNF-05: seguridad                  | **Parcial:** JWT, hash scrypt, roles y permisos implementados; falta E2E negativo y revisar configuración al desplegar. |
+| RNF-06: consistencia transaccional | **Parcial:** commits/rollbacks y locks en código; faltan E2E y competencia real (`--concurrencia`).                     |
+| RNF-07: auditabilidad              | **Parcial:** bitácora registrada en transacciones; probar filtros y exactitud de snapshots E2E.                         |
+| RNF-08: interfaz en español        | **Pendiente:** backend usa respuestas en español; interfaz React no construida.                                         |
+| RNF-09: respuesta usual <= 3 s     | **Pendiente de medición:** caso F-PERF-001 sobre backend local.                                                         |
+| RNF-10: HTTP/JSON                  | **Implementado:** rutas REST y respuestas JSON; HTTPS deberá configurarse en nube.                                      |
+| RNF-11: datos ficticios            | **Verificado por juego de prueba:** 3 sucursales, 4 medicamentos, operaciones ficticias.                                |
 
 ## Correspondencia con el enunciado universitario
 

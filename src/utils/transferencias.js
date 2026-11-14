@@ -21,7 +21,8 @@ export function validarNuevaTransferencia(body) {
     const id_medicamento = positiveId(item.id_medicamento, `detalles[${index}].id_medicamento`);
     const cantidad = nonNegativeCount(item.cantidad, `detalles[${index}].cantidad`);
     if (cantidad === 0) throw badRequest(`detalles[${index}].cantidad debe ser mayor que cero.`);
-    if (usados.has(id_medicamento)) throw badRequest('Un medicamento no puede repetirse en la misma transferencia.');
+    if (usados.has(id_medicamento))
+      throw badRequest('Un medicamento no puede repetirse en la misma transferencia.');
     usados.add(id_medicamento);
     return { id_medicamento, cantidad };
   });
@@ -38,10 +39,13 @@ export function autorizarTransferencia(usuario, t, accion) {
 }
 
 export function validarEstadoTransferencia(actual, requerido, accion) {
-  if (actual !== requerido) throw conflict(`No es posible ${accion}: estado actual ${actual}; se requiere ${requerido}.`);
+  if (actual !== requerido)
+    throw conflict(`No es posible ${accion}: estado actual ${actual}; se requiere ${requerido}.`);
 }
 
 export function validarDisponibilidad(existente, reservada, solicitada) {
-  if (existente === undefined || existente === null) throw conflict('No existe inventario inicial para uno de los medicamentos de origen.');
-  if (existente - reservada < solicitada) throw conflict('Existencias disponibles insuficientes; se respetan las reservas de entregas.');
+  if (existente === undefined || existente === null)
+    throw conflict('No existe inventario inicial para uno de los medicamentos de origen.');
+  if (existente - reservada < solicitada)
+    throw conflict('Existencias disponibles insuficientes; se respetan las reservas de entregas.');
 }

@@ -7,13 +7,24 @@ function jsonClob(value) {
 }
 
 // Debe ejecutarse en la MISMA conexion y transaccion que el cambio.
-export async function guardarAuditoria(conn, { usuarioId, sucursalId = null, entidad, registroId, accion, antes = null, despues = null }) {
-  await conn.execute(`
+export async function guardarAuditoria(
+  conn,
+  { usuarioId, sucursalId = null, entidad, registroId, accion, antes = null, despues = null },
+) {
+  await conn.execute(
+    `
     INSERT INTO registro_auditoria
       (id_usuario, id_sucursal, entidad, id_registro, accion, datos_anteriores, datos_nuevos)
     VALUES (:usuarioId, :sucursalId, :entidad, :registroId, :accion, :antes, :despues)
-  `, {
-    usuarioId, sucursalId, entidad, registroId, accion,
-    antes: jsonClob(antes), despues: jsonClob(despues)
-  });
+  `,
+    {
+      usuarioId,
+      sucursalId,
+      entidad,
+      registroId,
+      accion,
+      antes: jsonClob(antes),
+      despues: jsonClob(despues),
+    },
+  );
 }

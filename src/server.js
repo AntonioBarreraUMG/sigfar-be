@@ -6,11 +6,18 @@ let server;
 try {
   const config = readConfig();
   await initPool(config.oracle);
-  const dbInfo = await withConnection(async conn => (await conn.execute(`
+  const dbInfo = await withConnection(
+    async (conn) =>
+      (
+        await conn.execute(`
     SELECT SYS_CONTEXT('USERENV','CURRENT_SCHEMA') AS esquema,
            SYS_CONTEXT('USERENV','CON_NAME') AS contenedor FROM dual
-  `)).rows[0]);
-  console.log(`Oracle conectado: ${config.oracle.connectString} | esquema=${dbInfo.ESQUEMA} | contenedor=${dbInfo.CONTENEDOR}`);
+  `)
+      ).rows[0],
+  );
+  console.log(
+    `Oracle conectado: ${config.oracle.connectString} | esquema=${dbInfo.ESQUEMA} | contenedor=${dbInfo.CONTENEDOR}`,
+  );
   // En local conserva localhost; Cloud Run requiere escuchar en todas las interfaces.
   const host = process.env.K_SERVICE ? '0.0.0.0' : '127.0.0.1';
   server = makeApp(config).listen(config.port, host, () => {
@@ -24,9 +31,9 @@ try {
 
 async function stop() {
   if (server) {
-    server.close(async error => {
+    server.close(async (error) => {
       if (error) console.error('Error al detener HTTP:', error.message);
-      await closePool().catch(err => console.error(err.message));
+      await closePool().catch((err) => console.error(err.message));
       process.exit(error ? 1 : 0);
     });
   }

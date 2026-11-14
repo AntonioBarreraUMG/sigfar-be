@@ -18,20 +18,20 @@ Estos archivos usan SQL de Oracle Database XE 21c, pero evitan comandos que depe
 
 1. Crear o abrir una conexión de tipo **Oracle**, apuntando a la **PDB** donde trabajará SIGFAR; en XE 21c suele ser `XEPDB1`, pero confirme su instalación. Utilice un esquema de trabajo propio con privilegios de `CREATE TABLE` y cuota de almacenamiento. No trabaje sobre `SYS` o `SYSTEM`.
 2. Abrir cada archivo `.sql` con el editor SQL de esa conexión y ejecutar `00_diagnostico.sql`. Comprobar usuario, esquema y contenedor; la columna `TABLAS_SIGFAR_YA_EXISTENTES` debe indicar **0** para instalar el esquema desde cero.
-3. Abrir `01_esquema.sql` y ejecutar el archivo **completo** con **Alt+X** (menú *SQL Editor -> Execute SQL Script*). Confirmar que no aparezcan errores de ejecución.
+3. Abrir `01_esquema.sql` y ejecutar el archivo **completo** con **Alt+X** (menú _SQL Editor -> Execute SQL Script_). Confirmar que no aparezcan errores de ejecución.
 4. Abrir `02_datos_prueba.sql` y ejecutar **Alt+X**. Este archivo incluye `COMMIT` final. Si la carga falla y está en modo manual, hacer **Rollback** de las inserciones fallidas y corregir antes de intentar de nuevo. **No ejecutar dos veces si ya terminó bien**.
 5. Abrir `03_verificacion.sql` y ejecutarlo con **Ctrl+Enter** (una consulta) o **Alt+X**. La tabla de resultados debe mostrar **OK en todas las filas**.
 6. Abrir `04_consultas_ejemplo.sql` y ejecutar cada consulta por separado con **Ctrl+Enter**, o todas con **Alt+X** y revisar los diferentes resultados.
 
 ### Preferencias útiles de DBeaver
 
-En `Window -> Preferences -> Editors -> SQL Editor -> SQL Processing`, mantener `;` como separador de sentencias; **Blank line is statement delimiter = Never**, y activar **Remove trailing query delimiter** si el driver de Oracle recibe el `;` como parte del SQL. En ajustes de *Scripts*, elegir **Error handling = Stop + rollback** (en lugar de *Ignore*) para impedir que continúe una carga tras un fallo. Para datos, usar el modo de transacción manual o `Commit type = At script end`; hay un `COMMIT` final explícito.
+En `Window -> Preferences -> Editors -> SQL Editor -> SQL Processing`, mantener `;` como separador de sentencias; **Blank line is statement delimiter = Never**, y activar **Remove trailing query delimiter** si el driver de Oracle recibe el `;` como parte del SQL. En ajustes de _Scripts_, elegir **Error handling = Stop + rollback** (en lugar de _Ignore_) para impedir que continúe una carga tras un fallo. Para datos, usar el modo de transacción manual o `Commit type = At script end`; hay un `COMMIT` final explícito.
 
-> **Atención:** en Oracle, los comandos DDL como `CREATE TABLE` realizan *commit implícito*. Una ejecución parcial de `01_esquema.sql` puede dejar tablas creadas aunque la opción sea *Stop + rollback*. **No se recomienda borrar tablas que ya contengan datos reales**. Trabaje con un esquema SIGFAR de demostración limpio.
+> **Atención:** en Oracle, los comandos DDL como `CREATE TABLE` realizan _commit implícito_. Una ejecución parcial de `01_esquema.sql` puede dejar tablas creadas aunque la opción sea _Stop + rollback_. **No se recomienda borrar tablas que ya contengan datos reales**. Trabaje con un esquema SIGFAR de demostración limpio.
 
 ### Si necesita crear el usuario SIGFAR
 
-Hacerlo únicamente con un usuario administrador conectado a la **PDB correcta** (no al contenedor raíz). Cambiar la contraseña y adaptar el *tablespace* existente en su instalación:
+Hacerlo únicamente con un usuario administrador conectado a la **PDB correcta** (no al contenedor raíz). Cambiar la contraseña y adaptar el _tablespace_ existente en su instalación:
 
 ```sql
 CREATE USER sigfar IDENTIFIED BY "CAMBIAR_POR_CLAVE_SEGURA";
@@ -47,16 +47,16 @@ El archivo `03_verificacion.sql` muestra un conjunto de comprobaciones, incluida
 
 ## Errores frecuentes
 
-| Error / síntoma | Posible causa | Acción sugerida |
-|---|---|---|
-| `ORA-00900` cerca de `PROMPT`, `SET`, `WHENEVER` | Se está ejecutando el paquete antiguo desde el editor SQL | Usar estos archivos actualizados. |
-| `ORA-00955` al crear una tabla | Alguna tabla ya existe (instalación previa/parcial) | Comprobar `00_diagnostico.sql`; usar un esquema limpio de prueba, sin borrar datos reales. |
-| `ORA-00942` al cargar datos | El esquema no se creó, el usuario es incorrecto o se interrumpió `01` | Revisar la conexión y terminar de crear el esquema. |
-| `ORA-01031` | Privilegios insuficientes | Solicitar `CREATE TABLE` y permisos apropiados en el esquema correcto. |
-| `ORA-01950` | Usuario sin cuota en el tablespace | Asignar cuota de almacenamiento al usuario. |
-| `ORA-65096` al crear usuario | Conexión al contenedor raíz CDB | Usar la conexión a la PDB. |
-| `ORA-00001` al insertar datos ficticios | La carga ya se ejecutó o quedó parcialmente insertada | Evitar repetir la carga; revisar transacciones y esquema. |
-| Verificación muestra `ERROR` | Datos incompletos, modificados o esquema incorrecto | Revisar el esperado/obtenido de cada fila. |
+| Error / síntoma                                  | Posible causa                                                         | Acción sugerida                                                                            |
+| ------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `ORA-00900` cerca de `PROMPT`, `SET`, `WHENEVER` | Se está ejecutando el paquete antiguo desde el editor SQL             | Usar estos archivos actualizados.                                                          |
+| `ORA-00955` al crear una tabla                   | Alguna tabla ya existe (instalación previa/parcial)                   | Comprobar `00_diagnostico.sql`; usar un esquema limpio de prueba, sin borrar datos reales. |
+| `ORA-00942` al cargar datos                      | El esquema no se creó, el usuario es incorrecto o se interrumpió `01` | Revisar la conexión y terminar de crear el esquema.                                        |
+| `ORA-01031`                                      | Privilegios insuficientes                                             | Solicitar `CREATE TABLE` y permisos apropiados en el esquema correcto.                     |
+| `ORA-01950`                                      | Usuario sin cuota en el tablespace                                    | Asignar cuota de almacenamiento al usuario.                                                |
+| `ORA-65096` al crear usuario                     | Conexión al contenedor raíz CDB                                       | Usar la conexión a la PDB.                                                                 |
+| `ORA-00001` al insertar datos ficticios          | La carga ya se ejecutó o quedó parcialmente insertada                 | Evitar repetir la carga; revisar transacciones y esquema.                                  |
+| Verificación muestra `ERROR`                     | Datos incompletos, modificados o esquema incorrecto                   | Revisar el esperado/obtenido de cada fila.                                                 |
 
 ## Credenciales de prueba
 

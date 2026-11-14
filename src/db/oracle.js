@@ -21,14 +21,17 @@ export async function withConnection(callback) {
   }
 }
 export async function withTransaction(callback) {
-  return withConnection(async connection => {
+  return withConnection(async (connection) => {
     try {
       const result = await callback(connection);
       await connection.commit();
       return result;
     } catch (error) {
-      try { await connection.rollback(); }
-      catch (rollbackError) { console.error('No fue posible hacer rollback:', rollbackError.message); }
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error('No fue posible hacer rollback:', rollbackError.message);
+      }
       throw error;
     }
   });

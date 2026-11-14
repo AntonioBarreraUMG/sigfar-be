@@ -32,11 +32,14 @@ export function readConfig(env = process.env) {
       connectString: `${env.DB_HOST?.trim() || '127.0.0.1'}:${dbPort}/${env.DB_SERVICE?.trim() || 'XEPDB1'}`,
       poolMin,
       poolMax,
-      poolIncrement: 1
+      poolIncrement: 1,
     },
     jwtSecret,
     jwtExpiresIn: env.JWT_EXPIRES_IN || '8h',
-    corsOrigins: (env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173').split(',').map(x => x.trim()).filter(Boolean),
-    nodeEnv: env.NODE_ENV || 'development'
+    corsOrigins: (env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean),
+    nodeEnv: env.NODE_ENV || 'development',
   });
 }
